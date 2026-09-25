@@ -23,7 +23,7 @@ on:
 jobs:
   generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       HF_HUB_DISABLE_XET: "1"
       HF_HUB_ENABLE_HF_TRANSFER: "0"

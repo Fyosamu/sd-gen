@@ -58,7 +58,8 @@ def _pipe():
 
 
 def _render_size(w, h):
-    cap = float(os.environ.get("SD_MAX_SIDE", "1024"))
+    # 1152 = noticeably sharper faces; costs ~30% render time (timeout covers it)
+    cap = float(os.environ.get("SD_MAX_SIDE", "1152"))
     s = min(1.0, cap / max(w, h))
     nw = max(64, int(w * s) // 8 * 8)
     nh = max(64, int(h * s) // 8 * 8)
