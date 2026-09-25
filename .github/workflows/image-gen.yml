@@ -1,0 +1,82 @@
+name: image-gen
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: "text prompt for the image"
+        required: true
+        default: "cinematic photorealistic photo of a chess grandmaster thinking across the board, dramatic warm light"
+      width:
+        description: "width"
+        required: false
+        default: "1280"
+      height:
+        description: "height"
+        required: false
+        default: "720"
+      model:
+        description: "diffusers model id"
+        required: false
+        default: "stabilityai/stable-diffusion-xl-base-1.0"
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HF_HUB_DISABLE_XET: "1"
+      HF_HUB_ENABLE_HF_TRANSFER: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space (model is 3.5 GB, runner only has 14 GB)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android \
+                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost \
+                      /usr/share/swift /usr/local/.ghcup || true
+          sudo docker image prune -af >/dev/null 2>&1 || true
+          df -h /
+
+      - name: Add 6 GB swap (SDXL peak memory safety)
+        run: |
+          sudo fallocate -l 6G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile >/dev/null
+          sudo swapon /swapfile || true
+          free -h
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache the model (downloads once, reused on every run)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-model-${{ inputs.model }}
+          restore-keys: |
+            hf-model-
+
+      - name: Install CPU torch + diffusers
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install diffusers transformers accelerate safetensors pillow
+
+      - name: Generate image
+        env:
+          SD_MODEL: ${{ inputs.model }}
+          HF_HUB_DISABLE_SYMLINKS_WARNING: "1"
+        run: |
+          mkdir -p out
+          python bot/local_sd.py "${{ inputs.prompt }}" "out/generated_${{ github.run_number }}.jpg" ${{ inputs.width }} ${{ inputs.height }}
+
+      - name: Measure
+        run: ls -lh out/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-image-${{ github.run_number }}
+          path: out/*.jpg
+          retention-days: 7
