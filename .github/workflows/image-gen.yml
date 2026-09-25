@@ -40,11 +40,18 @@ jobs:
 
       - name: Add 6 GB swap (SDXL peak memory safety)
         run: |
-          sudo fallocate -l 6G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile >/dev/null
-          sudo swapon /swapfile || true
+          set +e
+          if [ -z "$(swapon --show | tail -n +2)" ]; then
+            sudo rm -f /swapfile
+            sudo dd if=/dev/zero of=/swapfile bs=1M count=6144 status=none \
+              || sudo fallocate -l 6G /swapfile
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile >/dev/null 2>&1
+            sudo swapon /swapfile || true
+          fi
+          swapon --show || true
           free -h
+          df -h /
 
       - uses: actions/setup-python@v5
         with:
