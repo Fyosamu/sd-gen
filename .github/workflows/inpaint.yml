@@ -53,13 +53,13 @@ jobs:
         with:
           python-version: "3.11"
 
+      # only the inpainting model is cached; no restore-keys, otherwise the
+      # combined cache would blow past the repo's 10 GB cache budget
       - name: Cache the model (downloads once, reused on every run)
         uses: actions/cache@v4
         with:
-          path: ~/.cache/huggingface
-          key: hf-inpaint-v1
-          restore-keys: |
-            hf-
+          path: ~/.cache/huggingface/hub/models--diffusers--stable-diffusion-xl-1.0-inpainting-0.1
+          key: hf-inpaint-diffusers-v1
 
       - name: Install CPU torch + diffusers
         run: |
