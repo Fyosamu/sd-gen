@@ -1,0 +1,29 @@
+name: probe
+
+# Check which free text->image endpoints actually answer FROM a GitHub runner
+# (no key, no credits, no local bandwidth).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe
+        run: |
+          set +e
+          probe() {
+            echo "=== $1"
+            curl -sS -L -o /tmp/p.bin \
+              -w 'http=%{http_code} bytes=%{size_download} type=%{content_type} t=%{time_total}\n' \
+              --max-time 45 "$1"
+            head -c 240 /tmp/p.bin | tr -d '\0' ; echo
+            echo
+          }
+          probe "https://gen.pollinations.ai/image/a%20red%20apple?model=flux"
+          probe "https://image.pollinations.ai/prompt/a%20red%20apple?width=512&height=512&nologo=true"
+          probe "https://image.pollinations.ai/prompt/a%20red%20apple?model=nanobanana-2-lite&width=512&height=512"
+          probe "https://gen.pollinations.ai/v1/models"
+          probe "https://api.cloudflare.com/client/v4"
