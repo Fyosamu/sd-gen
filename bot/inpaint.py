@@ -20,9 +20,12 @@ import time
 
 from PIL import Image, ImageFilter
 
+# NOTE: stabilityai/...-inpainting-0.1 is gated (HTTP 401 on a runner with no
+# account).  diffusers/... is the same weights, published by the diffusers org
+# and fully public.
 MODEL = os.environ.get(
     "SD_INPAINT_MODEL",
-    "stabilityai/stable-diffusion-xl-1.0-inpainting-0.1")
+    "diffusers/stable-diffusion-xl-1.0-inpainting-0.1")
 NEGATIVE = os.environ.get(
     "SD_NEGATIVE",
     "text, watermark, logo, signature, letters, writing, people, person, "
