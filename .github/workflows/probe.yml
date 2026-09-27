@@ -1,32 +1,12 @@
+# DISABLED 2026-09-28 at the owner's request.
+# Original file archived at .github/disabled-workflows/probe.yml
+# Nothing runs automatically until the owner re-enables it.
 name: probe
-
-# TRUE latency per model: a unique prompt per model so no response is cached.
-
 on:
   workflow_dispatch:
-
 jobs:
-  probe:
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 14
     steps:
-      - name: Benchmark
-        run: |
-          set +e
-          bench() {
-            printf '%-24s ' "$1"
-            curl -sS -L -o "/tmp/$1.bin" \
-              -w 'http=%{http_code} bytes=%{size_download} t=%{time_total}s\n' \
-              --max-time 120 \
-              "https://image.pollinations.ai/prompt/$2?model=$1&width=1024&height=576&seed=$3"
-          }
-          bench flux "a+red+rowing+boat+$3+docked+at+a+wooden+pier+in+morning+fog" 101
-          bench nanobanana-2-lite "an+old+$3+typewriter+on+a+rainy+window+sill" 102
-          bench nanobanana-2 "a+$3+lantern+hanging+in+a+stone+archway" 103
-          bench seedream5 "a+$3+market+stall+of+spices+at+golden+hour" 104
-          bench qwen-image "a+$3+rope+bridge+over+a+deep+canyon" 105
-          bench zimage "a+$3+ceramic+mug+steam+macro+shot" 106
-          bench dreamshaper "a+$3+fox+sitting+in+snowy+forest" 107
-          bench recraft-v4.1-flash "a+$3+sailboat+silhouette+sunset+sea" 108
-          bench gpt-image-2 "a+$3+lighthouse+on+wet+black+rocks+dawn" 109
-          bench grok-imagine-image-2.0 "a+$3+neon+alley+rain+reflection" 110
+      - run: echo disabled
