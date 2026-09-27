@@ -1,0 +1,86 @@
+name: inpaint
+
+# Out-paint a photo: the photo is already pasted on the canvas at its final
+# place, everything around it is masked and generated so the new area looks
+# like a continuation of the photo's own background.  Runs on CPU, no credits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      jobs:
+        description: "JSON list: [{file, rect, out, prompt}]"
+        required: true
+        default: "[]"
+      steps:
+        description: "diffusion steps"
+        required: false
+        default: "28"
+
+jobs:
+  inpaint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      HF_HUB_DISABLE_XET: "1"
+      HF_HUB_ENABLE_HF_TRANSFER: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space (the model is ~7 GB, runner only has 14 GB)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android \
+                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost \
+                      /usr/share/swift /usr/local/.ghcup || true
+          sudo docker image prune -af >/dev/null 2>&1 || true
+          df -h /
+
+      - name: Add 6 GB swap (SDXL peak memory safety)
+        run: |
+          set +e
+          if [ -z "$(swapon --show | tail -n +2)" ]; then
+            sudo rm -f /swapfile
+            sudo dd if=/dev/zero of=/swapfile bs=1M count=6144 status=none \
+              || sudo fallocate -l 6G /swapfile
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile >/dev/null 2>&1
+            sudo swapon /swapfile || true
+          fi
+          swapon --show || true
+          free -h
+          df -h /
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # only the inpainting model is cached; no restore-keys, otherwise the
+      # combined cache would blow past the repo's 10 GB cache budget
+      - name: Cache the model (downloads once, reused on every run)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface/hub/models--diffusers--stable-diffusion-xl-1.0-inpainting-0.1
+          key: hf-inpaint-diffusers-v1
+
+      - name: Install CPU torch + diffusers
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install diffusers transformers accelerate safetensors pillow
+
+      - name: Out-paint
+        env:
+          JOBS: ${{ inputs.jobs }}
+          STEPS: ${{ inputs.steps }}
+          HF_HUB_DISABLE_SYMLINKS_WARNING: "1"
+        run: |
+          mkdir -p out
+          python bot/inpaint.py
+
+      - name: Measure
+        run: ls -lh out/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: inpainted-${{ github.run_number }}
+          path: out/*.jpg
+          retention-days: 7
