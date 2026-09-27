@@ -32,12 +32,11 @@ def _get(url, timeout=100):
     req = urllib.request.Request(url, headers={"User-Agent": "sd-gen/1.0"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         data = r.read()
-        if b"json" not in (r.headers.get("content-type", b"").lower()
-                           if isinstance(r.headers.get("content-type"), bytes)
-                           else r.headers.get("content-type", "").lower()):
-            return data
-        # an auth/rate-limit body: show it so the log is not a mystery
-        raise ValueError("server said: %s" % data[:240].decode("utf-8", "replace"))
+        ctype = (r.headers.get("Content-Type") or "").lower()
+        if "json" in ctype or "text" in ctype or "html" in ctype:
+            raise ValueError("server said: %s"
+                             % data[:240].decode("utf-8", "replace"))
+        return data
 
 
 def generate(prompt, out, model="flux", width=1280, height=720, seed=0,
