@@ -1,39 +1,12 @@
+# DISABLED 2026-09-28 at the owner's request.
+# Original archived at .github/disabled-workflows/fetch_assets.yml
+# Nothing runs automatically until the owner re-enables it.
 name: fetch-assets
 on:
   workflow_dispatch:
-    inputs:
-      kind:
-        description: 'photos / music / photos+music'
-        required: false
-        default: 'photos+music'
-      name:
-        description: 'person to search on Wikimedia Commons'
-        required: false
-        default: 'Donald Trump'
-      limit:
-        description: 'how many photos'
-        required: false
-        default: '40'
-      muz:
-        description: 'how many music tracks'
-        required: false
-        default: '8'
 jobs:
-  fetch:
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: pip install pillow
-      - name: download free assets
-        run: |
-          python bot/fetch_assets.py --kind=${{ inputs.kind }} --name="${{ inputs.name }}" --limit=${{ inputs.limit }} --muz=${{ inputs.muz }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: assets-${{ github.run_number }}
-          path: assets/
-          if-no-files-found: error
-          retention-days: 7
+      - run: echo disabled
