@@ -1,6 +1,6 @@
 name: probe
 
-# Find out which query parameters of the keyless image endpoint need a key.
+# Latency benchmark: which keyless text->image model is fastest?
 
 on:
   workflow_dispatch:
@@ -8,24 +8,21 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
-      - name: Probe
+      - name: Benchmark
         run: |
           set +e
-          P="a%20red%20apple%20on%20a%20wooden%20table"
-          LONG="cinematic%20photograph%20of%20a%20marble%20chessboard%20shot%20from%20a%20low%20angle%20dark%20emerald%20and%20cream%20squares%20a%20golden%20king%20piece%20catching%20warm%20rim%20light%20deep%20black%20background%20shallow%20depth%20of%20field%20dramatic%20studio%20lighting%20ultra%20sharp%20no%20text%20no%20watermark%20no%20people"
-          probe() {
-            echo "=== $1"
+          P="cinematic+wide+shot+of+a+marble+chessboard+in+a+dark+hall+a+golden+beam+of+light+shallow+depth+of+field+no+text"
+          bench() {
+            printf '%-28s ' "$1"
             curl -sS -L -o /tmp/p.bin \
-              -w 'http=%{http_code} bytes=%{size_download} type=%{content_type}\n' \
-              --max-time 45 "$1"
-            head -c 200 /tmp/p.bin | tr -d '\0' ; echo; echo
+              -w 'http=%{http_code} bytes=%{size_download} t=%{time_total}s\n' \
+              --max-time 90 "$1" 2>&1 | tail -1
+            head -c 80 /tmp/p.bin | tr -d '\0' ; echo
           }
-          probe "https://gen.pollinations.ai/image/$P?model=flux"
-          probe "https://gen.pollinations.ai/image/$P?model=flux&width=1280&height=720"
-          probe "https://gen.pollinations.ai/image/$P?model=flux&seed=41"
-          probe "https://gen.pollinations.ai/image/$P?model=flux&nologo=true"
-          probe "https://gen.pollinations.ai/image/$P?model=flux&width=1280&height=720&nologo=true&seed=41"
-          probe "https://gen.pollinations.ai/image/$LONG?model=flux&width=1280&height=720"
-          probe "https://image.pollinations.ai/prompt/$LONG?width=1280&height=720&nologo=true&seed=41"
+          for m in flux nanobanana-2-lite nanobanana-2 seedream5 qwen-image zimage kontext dreamshaper recraft-v4.1-flash gpt-image-2; do
+            bench "https://image.pollinations.ai/prompt/$P?model=$m&width=1024&height=576&seed=9"
+          done
+          echo "--- gen.pollinations (needs key, expect 401) ---"
+          bench "https://gen.pollinations.ai/image/$P?model=flux&width=1024&height=576"
