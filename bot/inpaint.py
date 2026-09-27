@@ -31,7 +31,9 @@ NEGATIVE = os.environ.get(
     "text, watermark, logo, signature, letters, writing, people, person, "
     "face, hands, extra person, blurry, low quality, deformed, jpeg "
     "artifacts, visible seam, hard edge, abrupt cut, mismatched colours, "
-    "clutter, busy")
+    "clutter, busy, picture frame, gilded frame, ornate gold frame, "
+    "decorative border, picture border, portrait frame, gallery wall, "
+    "moulding, gold trim, symmetry")
 
 
 def mask_from_rect(size, rect, feather=24):
