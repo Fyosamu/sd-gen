@@ -20,7 +20,9 @@ import urllib.request
 
 from PIL import Image
 
-BASE = "https://gen.pollinations.ai/image/"
+# gen.pollinations.ai now answers 401 (wants an sk_ key); the classic host
+# image.pollinations.ai still serves images keyless - verified from a runner.
+BASE = "https://image.pollinations.ai/prompt/"
 # tried in order when the first choice fails / is throttled
 FALLBACK_MODELS = ["flux", "nanobanana-2-lite", "nanobanana-2", "seedream5",
                    "qwen-image"]
@@ -29,7 +31,13 @@ FALLBACK_MODELS = ["flux", "nanobanana-2-lite", "nanobanana-2", "seedream5",
 def _get(url, timeout=100):
     req = urllib.request.Request(url, headers={"User-Agent": "sd-gen/1.0"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+        data = r.read()
+        if b"json" not in (r.headers.get("content-type", b"").lower()
+                           if isinstance(r.headers.get("content-type"), bytes)
+                           else r.headers.get("content-type", "").lower()):
+            return data
+        # an auth/rate-limit body: show it so the log is not a mystery
+        raise ValueError("server said: %s" % data[:240].decode("utf-8", "replace"))
 
 
 def generate(prompt, out, model="flux", width=1280, height=720, seed=0,
