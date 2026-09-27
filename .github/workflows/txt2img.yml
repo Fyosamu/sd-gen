@@ -1,53 +1,12 @@
+# DISABLED 2026-09-28 at the owner's request.
+# Original archived at .github/disabled-workflows/txt2img.yml
+# Nothing runs automatically until the owner re-enables it.
 name: txt2img
-
-# Free text->image (Flux / Nano Banana / Seedream / Qwen-Image) run entirely on
-# the runner: keyless, no credits, nothing downloaded to the local machine.
-
 on:
   workflow_dispatch:
-    inputs:
-      jobs:
-        description: "JSON list: [{file, prompt, model, width, height, seed}]"
-        required: true
-        default: "[]"
-
 jobs:
-  txt2img:
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install pillow
-        run: python -m pip install --upgrade pip pillow
-
-      - name: Generate
-        env:
-          JOBS: ${{ inputs.jobs }}
-        run: |
-          mkdir -p out
-          python bot/txt2img.py
-
-      - name: Measure
-        run: |
-          ls -lh out/
-          python - <<'PY'
-          import glob, os
-          from PIL import Image
-          for p in sorted(glob.glob("out/*")):
-              try:
-                  im = Image.open(p); im.load()
-                  print(os.path.basename(p), im.size, im.mode, os.path.getsize(p))
-              except Exception as e:
-                  print("BAD", p, e)
-          PY
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: txt2img-${{ github.run_number }}
-          path: out/*
-          retention-days: 7
+      - run: echo disabled
